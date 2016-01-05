@@ -1,9 +1,9 @@
 #!/bin/bash
 # Install Nginx + php-fpm + apc cache for Ubuntu and Debian distributions
 cd ~
-apt-get update
-apt-get -fy dist-upgrade
-apt-get -fy upgrade
+# apt-get update
+# apt-get -fy dist-upgrade
+# apt-get -fy upgrade
 apt-get install lsb-release bc
 REL=`lsb_release -sc`
 DISTRO=`lsb_release -is | tr [:upper:] [:lower:]`
