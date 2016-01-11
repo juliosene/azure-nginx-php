@@ -28,131 +28,28 @@ cp /etc/nginx/nginx.conf /etc/nginx/nginx-conf.old
 #
 # Replace nginx.conf
 #
-echo -e "user nginx www-data;\nworker_processes $WORKER;" > /etc/nginx/nginx.conf
-echo -e 'pid /var/run/nginx.pid;
+wget https://raw.githubusercontent.com/juliosene/azure-nginx-php/master/templates/nginx.conf
 
-events {
-        worker_connections 768;
-        # multi_accept on;
-}
-
-http {
-# Basic Settings
-        sendfile on;
-        tcp_nopush on;
-        tcp_nodelay on;
-        keepalive_timeout 5;
-        types_hash_max_size 2048;
-        # server_tokens off;
-
-        # server_names_hash_bucket_size 64;
-        # server_name_in_redirect off;
-
-        include /etc/nginx/mime.types;
-        default_type application/octet-stream;
-
-# Logging Settings
-log_format gzip '$remote_addr - $remote_user [$time_local]  '
-                '"$request" $status $bytes_sent '
-                '"$http_referer" "$http_user_agent" "$gzip_ratio"';
-
-        access_log /var/log/nginx/access.log gzip buffer=32k;
-        error_log /var/log/nginx/error.log notice;
-
-# Gzip Settings
-        gzip on;
-        gzip_disable "msie6";
-
-        gzip_vary on;
-        gzip_proxied any;
-        gzip_comp_level 6;
-        gzip_buffers 16 8k;
-        gzip_http_version 1.1;
-        gzip_types text/plain text/css application/json application/x-javascript text/xml application/xml application/xml+rss t
-ext/javascript;
-
-# Virtual Host Configs
-        include /etc/nginx/conf.d/*.conf;
-        include /etc/nginx/sites-enabled/*;
-
-}' >> /etc/nginx/nginx.conf
+sed -i "s/#WORKER#/$WORKER/g" nginx.conf
+mv nginx.conf /etc/nginx/
 
 # replace Nginx default.conf
 #
-echo -e '# Upstream to abstract backend connection(s) for php
-upstream php {
-	server unix:/var/run/php5-fpm.sock;
-#        server unix:/tmp/php-cgi.socket;
-#        server 127.0.0.1:9000;
-}
- 
-server {
-    	listen       80;
+wget https://raw.githubusercontent.com/juliosene/azure-nginx-php/master/templates/default.conf
 
-    	#charset koi8-r;
-    	#access_log  /var/log/nginx/log/host.access.log  main;
-        ## Your website name goes here.
-        server_name localhost;
-        ## Your only path reference.
-        root /usr/share/nginx/html;
-        ## This should be in your http block and if it is, it`s not needed here.
-        index index.htm index.html index.php;
-  	gzip on;
-	gzip_types text/css text/x-component application/x-javascript application/javascript text/javascript text/x-js text/richtext image/svg+xml text/plain text/xsd text/xsl text/xml image/x-icon;
-
-        location = /favicon.ico {
-                log_not_found off;
-                access_log off;
-        }
- 
-        location = /robots.txt {
-                allow all;
-                log_not_found off;
-                access_log off;
-        }
- 
-        location / {
-                # This is cool because no php is touched for static content. 
-                # include the "?$args" part so non-default permalinks doesn`t break when using query string
-                try_files $uri $uri/ /index.php?$args;
-        }
-        location ~ \.php$ {
-                #NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
-#	    	root           html;
-    		#    fastcgi_pass   127.0.0.1:9000;
-    		fastcgi_index  index.php;
-    		fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
-    		include        fastcgi_params;
-                # include fastcgi.conf;
-            	fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                fastcgi_intercept_errors on;
-                fastcgi_pass php;
-        }
-	location ~ \.(ttf|ttc|otf|eot|woff|font.css)$ {
-   		add_header Access-Control-Allow-Origin "*";
-	}
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
-                expires max;
-                log_not_found off;
-        }
-}' > /etc/nginx/conf.d/default.conf
+#sed -i "s/#WORKER#/$WORKER/g" nginx.conf
+mv default.conf /etc/nginx/conf.d/
 
 # Memcache client installation
 apt-get install -fy php-pear
 apt-get install -fy php5-dev
 printf "\n" |pecl install -f memcache
-echo -e '
-; /etc/php.d/memcache.ini
+#
+wget https://raw.githubusercontent.com/juliosene/azure-nginx-php/master/templates/memcache.ini
 
-extension = memcache.so
+#sed -i "s/#WORKER#/$WORKER/g" memcache.ini
+mv memcache.ini /etc/php5/mods-available/
 
-memcache.allow_failover = 1
-memcache.max_failover_attempts = 20
-memcache.chunk_size = 32768
-memcache.default_port = 11211
-memcache.hash_strategy = standard
-memcache.hash_function = crc32
-' > /etc/php5/mods-available/memcache.ini
  ln -s /etc/php5/mods-available/memcache.ini  /etc/php5/fpm/conf.d/20-memcache.ini
 #
 # Edit default page to show php info
