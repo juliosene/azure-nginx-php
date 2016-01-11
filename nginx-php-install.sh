@@ -11,9 +11,10 @@ NCORES=` cat /proc/cpuinfo | grep cores | wc -l`
 WORKER=`bc -l <<< "4*$NCORES"`
 
 wget http://nginx.org/keys/nginx_signing.key
-echo "deb http://nginx.org/packages/$DISTRO/ $REL nginx" >> /etc/apt/sources.list
-echo "deb-src http://nginx.org/packages/$DISTRO/ $REL nginx" >> /etc/apt/sources.list
 apt-key add nginx_signing.key
+add-apt-repository "deb http://nginx.org/packages/$DISTRO/ $REL nginx"
+add-apt-repository "deb-src http://nginx.org/packages/$DISTRO/ $REL nginx"
+
 apt-get update
 apt-get install -fy nginx
 apt-get install -fy php5-fpm php5-cli php5-mysql
