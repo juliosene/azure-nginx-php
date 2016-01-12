@@ -33,12 +33,6 @@ npm install -g azure-cli
 sudo azure storage share create $SharedAzureFileName -a $SharedStorageAccountName -k $SharedStorageAccountKey
 fi
 
-# mount share file on /var/www/moodledata
-
-apt-get install cifs-utils
-mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /usr/share/nginx/html -o uid=$(id -u www-data),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
-
-
 apt-get install -fy nginx
 apt-get install -fy php5-fpm php5-cli php5-mysql
 apt-get install -fy php-apc php5-gd
@@ -75,11 +69,17 @@ wget https://raw.githubusercontent.com/juliosene/azure-nginx-php/master/template
 mv memcache.ini /etc/php5/mods-available/
 
  ln -s /etc/php5/mods-available/memcache.ini  /etc/php5/fpm/conf.d/20-memcache.ini
+ 
+ # mount share file on /var/www/moodledata
+
+apt-get install cifs-utils
+mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /usr/share/nginx/html -o uid=$(id -u www-data),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
+
 #
 # Edit default page to show php info
 #
-mv /usr/share/nginx/html/index.html /usr/share/nginx/html/index.php
-echo -e "\n<?php\nphpinfo();\n?>" >> /usr/share/nginx/html/index.php
+#mv /usr/share/nginx/html/index.html /usr/share/nginx/html/index.php
+echo -e "<html><title>Azure Nginx PHP</title><body><h2>Your Nginx and PHP are installed!</h1></br>\n<?php\nphpinfo();\n?></body>" > /usr/share/nginx/html/index.php
 #
 # Services restart
 #
