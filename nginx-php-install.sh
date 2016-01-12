@@ -10,12 +10,35 @@ DISTRO=`lsb_release -is | tr [:upper:] [:lower:]`
 NCORES=` cat /proc/cpuinfo | grep cores | wc -l`
 WORKER=`bc -l <<< "4*$NCORES"`
 
+SharedStorageAccountName=$2
+SharedAzureFileName=$3
+SharedStorageAccountKey=$4
+
 wget http://nginx.org/keys/nginx_signing.key
 apt-key add nginx_signing.key
 add-apt-repository "deb http://nginx.org/packages/$DISTRO/ $REL nginx"
 add-apt-repository "deb-src http://nginx.org/packages/$DISTRO/ $REL nginx"
 
 apt-get update
+
+# Create Azure file shere if is the first VM
+if [ "0" -eq $1 ]; 
+then  
+# Create Azure file share that will be used by front end VM's for moodledata directory
+
+apt-get -y install nodejs-legacy
+apt-get -y install npm
+npm install -g azure-cli
+
+sudo azure storage share create $SharedAzureFileName -a $SharedStorageAccountName -k $SharedStorageAccountKey
+fi
+
+# mount share file on /var/www/moodledata
+
+apt-get install cifs-utils
+mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /usr/share/nginx/html -o uid=$(id -u www-data),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
+
+
 apt-get install -fy nginx
 apt-get install -fy php5-fpm php5-cli php5-mysql
 apt-get install -fy php-apc php5-gd
