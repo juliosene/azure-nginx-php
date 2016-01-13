@@ -73,7 +73,7 @@ mv memcache.ini /etc/php5/mods-available/
  ln -s /etc/php5/mods-available/memcache.ini  /etc/php5/fpm/conf.d/20-memcache.ini
  
  # mount share file on /usr/share/nginx/html
-if[ $1 -ne 2 ];
+if [ $1 -ne 2 ];
 then
 apt-get install cifs-utils
 mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /usr/share/nginx/html -o uid=$(id -u nginx),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
