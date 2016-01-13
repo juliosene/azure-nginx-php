@@ -2,6 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "(Short) Name for the Virtual Machine."
+      }
+    },
     "adminUsername": {
       "type": "string",
       "minLength": 1,
@@ -15,11 +21,18 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "vmName": {
-      "type": "string",
-      "minLength": 1,
+    "nodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "metadata": {
-        "description": "(Short) Name for the Virtual Machine."
+        "description": "Number of Virtual Machines."
       }
     },
     "dnsNameForPublicIP": {
@@ -27,21 +40,6 @@
       "minLength": 1,
       "metadata": {
         "description": "Globally unique DNS Name for the Public IP used to access the Virtual Machine."
-      }
-    },
-    "artifactsPath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/juliosene/azure-nginx-php/master",
-      "metadata": {
-        "description": "template and script file location",
-        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
-      }
-    },
-    "customScriptCommandToExecute": {
-      "type": "string",
-      "defaultValue": "bash nginx-php-install.sh",
-      "metadata": {
-        "description": "bash script command line"
       }
     },
     "ubuntuOSVersion": {
@@ -55,10 +53,42 @@
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version and install Ngnx web server with PHP. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "The size of each web front end VM."
+      }
     }
-  },
+    },
   "variables": {
     "resourceAPIVersion": "2015-06-15",
+    
+    "artifactsPath": "https://raw.githubusercontent.com/juliosene/azure-nginx-php/master",
+    "customScriptCommandToExecute": "bash nginx-php-install.sh",
 
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
@@ -72,13 +102,12 @@
     "vhdStorageContainerName": "vhds",
     "availabilitySetName": "[concat(parameters('vmName'), '-AvSet')]",
     "publicIPName": "[concat(parameters('vmName'),'-PubIP')]",
-    "vmSize": "Standard_D1",
     "nsgName": "[concat(parameters('vmName'),'-NSG')]",
     "virtualNetworkName": "[concat(parameters('vmName'),'-VNet')]",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
     "vhdStorageName": "[concat(tolower(parameters('vmName')), uniqueString(resourceGroup().id))]",
-    "customScriptFilePath": "[concat(parameters('artifactsPath'), '/nginx-php-install.sh')]"
+    "customScriptFilePath": "[concat(variables('artifactsPath'), '/nginx-php-install.sh')]"
   },
   "resources": [
     {
@@ -222,7 +251,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
@@ -272,7 +301,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[parameters('customScriptCommandToExecute')]"
+          "commandToExecute": "[variables('customScriptCommandToExecute')]"
         }
       }
     }
