@@ -23,6 +23,14 @@
     },
     "nodeCount": {
       "type": "int",
+      "defaultValue": 2,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
       "metadata": {
         "description": "Number of Virtual Machines."
       }
@@ -32,21 +40,6 @@
       "minLength": 1,
       "metadata": {
         "description": "Globally unique DNS Name for the Public IP used to access the Virtual Machine."
-      }
-    },
-    "artifactsPath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/juliosene/azure-nginx-php/master",
-      "metadata": {
-        "description": "template and script file location",
-        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
-      }
-    },
-    "customScriptCommandToExecute": {
-      "type": "string",
-      "defaultValue": "bash nginx-php-install.sh",
-      "metadata": {
-        "description": "bash script command line"
       }
     },
     "ubuntuOSVersion": {
@@ -60,46 +53,74 @@
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version and install Ngnx web server with PHP. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
       }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A0",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "The size of each web front end VM."
+      }
     }
-  },
-  "variables": {
-    "resourceAPIVersion": "2015-06-15",
+    },
+    "variables": {
+      "resourceAPIVersion": "2015-06-15",
+      "artifactsPath": "https://raw.githubusercontent.com/juliosene/azure-nginx-php/master",
 
-    "imagePublisher": "Canonical",
-    "imageOffer": "UbuntuServer",
-    "OSDiskName": "osdiskforlinuxsimple",
-    "nicName": "[concat(parameters('vmName'),'-Nic')]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",
-    "vhdStorageType": "Standard_LRS",
-    "publicIPAddressType": "Dynamic",
-    "vhdStorageContainerName": "vhds",
-    "availabilitySetName": "[concat(parameters('vmName'), '-AvSet')]",
-    "publicIPName": "[concat(parameters('vmName'),'-PubIP')]",
-    "vmSize": "Standard_D1",
-    "nsgName": "[concat(parameters('vmName'),'-NSG')]",
-    "lbName": "[concat(parameters('vmName'),'-LB')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "virtualNetworkName": "[concat(parameters('vmName'),'-VNet')]",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
-    "vhdStorageName": "[concat(tolower(parameters('vmName')), uniqueString(resourceGroup().id))]",
-    "customScriptFilePath": "[concat(parameters('artifactsPath'), '/nginx-php-install.sh')]",
+      "customScriptCommandToExecute": "bash nginx-php-install.sh",
 
-    "sshIPConfigName": "[concat(parameters('dnsNameForPublicIP'), '-sshIPCfg')]",
-    "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]"
-  },
+      "imagePublisher": "Canonical",
+      "imageOffer": "UbuntuServer",
+      "OSDiskName": "osdiskforlinuxsimple",
+      "nicName": "[concat(parameters('vmName'),'-Nic')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnetName": "Subnet",
+      "subnetPrefix": "10.0.0.0/24",
+      "vhdStorageType": "Standard_LRS",
+      "publicIPAddressType": "Dynamic",
+      "vhdStorageContainerName": "vhds",
+      "availabilitySetName": "[concat(parameters('vmName'), '-AvSet')]",
+      "publicIPName": "[concat(parameters('vmName'),'-PubIP')]",
+      "nsgName": "[concat(parameters('vmName'),'-NSG')]",
+      "lbName": "[concat(parameters('vmName'),'-LB')]",
+      "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
+      "virtualNetworkName": "[concat(parameters('vmName'),'-VNet')]",
+      "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+      "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+      "vhdStorageName": "[concat(tolower(parameters('vmName')), uniqueString(resourceGroup().id))]",
+      "customScriptFilePath": "[concat(variables('artifactsPath'), '/nginx-php-install.sh')]",
+      "nginxRootDir": "html",
+
+      "sshIPConfigName": "[concat(parameters('dnsNameForPublicIP'), '-sshIPCfg')]",
+      "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]"
+    },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('vhdStorageName'), copyIndex())]",
+      "name": "[concat(variables('vhdStorageName'))]",
       "apiVersion": "[variables('resourceAPIVersion')]",
       "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[parameters('nodeCount')]"
-      },
       "tags": {
         "displayName": "StorageAccount"
       },
@@ -292,7 +313,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'), copyindex())]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
       ],
       "properties": {
@@ -300,10 +321,10 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[concat(parameters('vmName'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -317,7 +338,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', variables('vhdStorageName'), copyindex(),'.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('OSDiskName'), '.vhd')]"
+              "uri": "[concat('http://',variables('vhdStorageName'),'.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('OSDiskName'),copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -334,15 +355,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'), copyIndex(), '/setupNginxPHP')]",
+      "name": "[concat(parameters('vmName'), sub(parameters('nodeCount'),1), '/setupNginxPHP')]",
       "apiVersion": "[variables('resourceAPIVersion')]",
       "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "virtualMachineExtLoop",
-        "count": "[parameters('nodeCount')]"
-      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyIndex())]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),sub(parameters('nodeCount'),1))]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
@@ -354,9 +371,36 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[parameters('customScriptCommandToExecute')]"
+          "commandToExecute": "[concat(variables('customScriptCommandToExecute'), ' 0 ',variables('vhdStorageName'), ' ', variables('nginxRootDir'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('vhdStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1)]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), copyIndex(), '/setupNginxPHP')]",
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineExtLoop",
+        "count": "[sub(parameters('nodeCount'),1)]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),copyIndex())]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),sub(parameters('nodeCount'),1),'/extensions/setupNginxPHP')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "settings": {
+          "fileUris": [
+            "[variables('customScriptFilePath')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('customScriptCommandToExecute'), ' 1 ',variables('vhdStorageName'), ' ', variables('nginxRootDir'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('vhdStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1)]"
         }
       }
     }
   ]
-}
+  }
