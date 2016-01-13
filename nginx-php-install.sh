@@ -24,7 +24,7 @@ apt-get update
 
 
 # Create Azure file shere if is the first VM
-if [ $1 -gt 0 ]; 
+if [ $1 -lt 1 ]; 
 then  
 # Create Azure file share that will be used by front end VM's for moodledata directory
 
