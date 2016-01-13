@@ -10,6 +10,7 @@ DISTRO=`lsb_release -is | tr [:upper:] [:lower:]`
 NCORES=` cat /proc/cpuinfo | grep cores | wc -l`
 WORKER=`bc -l <<< "4*$NCORES"`
 
+OPTION=${1-2}
 SharedStorageAccountName=$2
 SharedAzureFileName=$3
 SharedStorageAccountKey=$4
@@ -21,8 +22,9 @@ add-apt-repository "deb-src http://nginx.org/packages/$DISTRO/ $REL nginx"
 
 apt-get update
 
+
 # Create Azure file shere if is the first VM
-if [ "0" -eq $1 ]; 
+if [ $1 -gt 0 ]; 
 then  
 # Create Azure file share that will be used by front end VM's for moodledata directory
 
@@ -71,9 +73,11 @@ mv memcache.ini /etc/php5/mods-available/
  ln -s /etc/php5/mods-available/memcache.ini  /etc/php5/fpm/conf.d/20-memcache.ini
  
  # mount share file on /usr/share/nginx/html
-
+if[ $1 -ne 2 ];
+then
 apt-get install cifs-utils
 mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /usr/share/nginx/html -o uid=$(id -u nginx),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
+fi
 
 #
 # Edit default page to show php info
