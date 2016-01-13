@@ -3,19 +3,13 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
-      "value": "admin"
+      "value": "julio"
     },
     "vmName": {
-      "value": "Nginx"
-    },
-    "artifactsPath": {
-      "value": "https://raw.githubusercontent.com/juliosene/azure-nginx-php/master"
-    },
-    "customScriptCommandToExecute": {
-      "value": "bash nginx-php-install.sh"
+      "value": "Web"
     },
     "dnsNameForPublicIP": {
-      "value": "yourdnsname"
+      "value": "nginxweb0"
     },
     "nodeCount": {
       "value": 2
